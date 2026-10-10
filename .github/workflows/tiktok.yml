@@ -1,0 +1,42 @@
+name: TikTok DM Bot Automated Run
+
+on:
+  schedule:
+    # Runs twice daily at 15:00 UTC and 17:00 UTC
+    - cron: "0 15 * * *"
+    - cron: "0 17 * * *"
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install selenium==4.18.1 webdriver-manager==4.0.1 schedule==1.2.1
+
+      - name: Restore Cookies from Repository Secret
+        env:
+          COOKIES_JSON: ${{ secrets.COOKIES_JSON }}
+        run: |
+          python -c "import os, json; json.dump(json.loads(os.environ['COOKIES_JSON']), open('cookies.json', 'w'))"
+
+      - name: Run TikTok Script
+        run: python tiktokdm.py
+
+      - name: Save Error Screenshots (If Failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: error-screenshots
+          path: "*.png"
