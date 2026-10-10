@@ -2,10 +2,8 @@ name: TikTok DM Bot Automated Run
 
 on:
   schedule:
-    # Runs twice daily at 15:00 UTC and 17:00 UTC
-    - cron: "0 15 * * *"
-    - cron: "0 17 * * *"
-  workflow_dispatch: # Allows manual trigger from GitHub UI
+    - cron: "0 3 * * *"
+  workflow_dispatch:
 
 jobs:
   run-bot:
