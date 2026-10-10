@@ -3,7 +3,6 @@ import sys
 import json
 import time
 import logging
-from pathlib import Path
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -14,7 +13,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 CONFIG = {
-    "cookies_file":           "cookies.json",
     "message":                "passa",
     "headless":               True,
     "delay_between_messages": 10,
@@ -36,16 +34,15 @@ log = logging.getLogger(__name__)
 class TikTokDMSender:
 
     def __init__(self):
-        # Load targets from TARGET_USERNAMES env variable or fallback list
+        # Odczyt cełów ze zmiennej środowiskowej TARGET_USERNAMES
         env_targets = os.getenv("TARGET_USERNAMES")
         if env_targets:
             try:
                 self.target_usernames = json.loads(env_targets)
             except Exception:
-                # Handle comma-separated string fallback (e.g., "user1, user2")
                 self.target_usernames = [u.strip() for u in env_targets.split(",") if u.strip()]
         else:
-            self.target_usernames = ["user5138079151190", "lqrak_pl"]
+            self.target_usernames = []
 
     def _init_driver(self):
         log.info("Starting Chrome browser in GitHub Actions environment...")
@@ -70,10 +67,11 @@ class TikTokDMSender:
         )
         return driver
 
-    def _load_cookies(self, driver) -> bool:
-        cookies_path = Path(CONFIG["cookies_file"])
-        if not cookies_path.exists():
-            log.error("cookies.json not found!")
+    def _load_cookies_from_env(self, driver) -> bool:
+        # Odczyt ciasteczek ze zmiennej środowiskowej COOKIES_JSON
+        env_cookies = os.getenv("COOKIES_JSON")
+        if not env_cookies:
+            log.error("COOKIES_JSON environment variable is missing!")
             return False
 
         log.info("Opening TikTok to inject cookies...")
@@ -81,7 +79,7 @@ class TikTokDMSender:
         time.sleep(3)
 
         try:
-            cookies = json.loads(cookies_path.read_text(encoding="utf-8"))
+            cookies = json.loads(env_cookies)
             injected = 0
             for cookie in cookies:
                 for key in ["sameSite", "storeId", "id", "hostOnly", "session", "firstPartyDomain"]:
@@ -106,7 +104,7 @@ class TikTokDMSender:
             return True
 
         except Exception as e:
-            log.error(f"Failed to load cookies: {e}")
+            log.error(f"Failed to load cookies from environment: {e}")
             return False
 
     def _send_dm(self, driver, username, message):
@@ -158,9 +156,13 @@ class TikTokDMSender:
         log.info(f"Starting session - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         log.info("=" * 50)
 
+        if not self.target_usernames:
+            log.error("No target usernames found in TARGET_USERNAMES secret!")
+            return
+
         driver = self._init_driver()
         try:
-            if not self._load_cookies(driver):
+            if not self._load_cookies_from_env(driver):
                 log.error("Cookie login failed.")
                 return
 
