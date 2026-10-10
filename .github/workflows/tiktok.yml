@@ -26,6 +26,7 @@ jobs:
       - name: Restore Cookies from Repository Secret
         env:
           COOKIES_JSON: ${{ secrets.COOKIES_JSON }}
+          TARGET_USERNAMES: ${{ secrets.TARGET_USERNAMES }}
         run: |
           python -c "import os, json; json.dump(json.loads(os.environ['COOKIES_JSON']), open('cookies.json', 'w'))"
 
