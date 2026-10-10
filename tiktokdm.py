@@ -1,4 +1,3 @@
-import os
 import sys
 import json
 import time
@@ -13,7 +12,6 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from webdriver_manager.chrome import ChromeDriverManager
 
 CONFIG = {
     "cookies_file":           "cookies.json",
@@ -55,8 +53,8 @@ class TikTokDMSender:
             "Chrome/120.0.0.0 Safari/537.36"
         )
 
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service, options=options)
+        # Selenium 4 automatically detects Chrome and ChromeDriver on GitHub Actions runners
+        driver = webdriver.Chrome(options=options)
         
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
