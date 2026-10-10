@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import time
@@ -9,14 +10,12 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 
 CONFIG = {
     "cookies_file":           "cookies.json",
     "message":                "passa",
-    "target_usernames":       ["user5138079151190", "lqrak_pl"],
     "headless":               True,
     "delay_between_messages": 10,
 }
@@ -36,6 +35,18 @@ log = logging.getLogger(__name__)
 
 class TikTokDMSender:
 
+    def __init__(self):
+        # Load targets from TARGET_USERNAMES env variable or fallback list
+        env_targets = os.getenv("TARGET_USERNAMES")
+        if env_targets:
+            try:
+                self.target_usernames = json.loads(env_targets)
+            except Exception:
+                # Handle comma-separated string fallback (e.g., "user1, user2")
+                self.target_usernames = [u.strip() for u in env_targets.split(",") if u.strip()]
+        else:
+            self.target_usernames = ["user5138079151190", "lqrak_pl"]
+
     def _init_driver(self):
         log.info("Starting Chrome browser in GitHub Actions environment...")
         options = Options()
@@ -53,9 +64,7 @@ class TikTokDMSender:
             "Chrome/120.0.0.0 Safari/537.36"
         )
 
-        # Selenium 4 automatically detects Chrome and ChromeDriver on GitHub Actions runners
         driver = webdriver.Chrome(options=options)
-        
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
@@ -155,10 +164,12 @@ class TikTokDMSender:
                 log.error("Cookie login failed.")
                 return
 
+            log.info(f"Loaded targets ({len(self.target_usernames)}): {self.target_usernames}")
+
             success = 0
             failed  = 0
 
-            for username in CONFIG["target_usernames"]:
+            for username in self.target_usernames:
                 result = self._send_dm(driver, username, CONFIG["message"])
                 if result:
                     success += 1
