@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import time
@@ -15,11 +16,11 @@ from selenium.webdriver.common.action_chains import ActionChains
 from webdriver_manager.chrome import ChromeDriverManager
 
 CONFIG = {
-    "cookies_file":           "cookies.json",  # Cookies file from Cookie-Editor
-    "message":                "STREAK!!!",     # Message to send
-    "target_usernames":       ["USERNAME", "USERNAME"],  # List of TikTok usernames (without @)
-    "headless":               False,           # False = visible browser | True = background (no window)
-    "delay_between_messages": 10,              # Delay in seconds between each message
+    "cookies_file":           "cookies.json",
+    "message":                "passa",
+    "target_usernames":       ["user5138079151190", "lqrak_pl"],
+    "headless":               True,
+    "delay_between_messages": 10,
 }
 
 logging.basicConfig(
@@ -38,12 +39,12 @@ log = logging.getLogger(__name__)
 class TikTokDMSender:
 
     def _init_driver(self):
-        log.info("Starting browser...")
+        log.info("Starting Chrome browser in GitHub Actions environment...")
         options = Options()
-        if CONFIG["headless"]:
-            options.add_argument("--headless=new")
+        options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
         options.add_argument("--disable-blink-features=AutomationControlled")
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
@@ -53,8 +54,10 @@ class TikTokDMSender:
             "AppleWebKit/537.36 (KHTML, like Gecko) "
             "Chrome/120.0.0.0 Safari/537.36"
         )
+
         service = Service(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service, options=options)
+        
         driver.execute_script(
             "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
         )
@@ -63,7 +66,7 @@ class TikTokDMSender:
     def _load_cookies(self, driver) -> bool:
         cookies_path = Path(CONFIG["cookies_file"])
         if not cookies_path.exists():
-            log.error("cookies.json not found! Export it first using Cookie-Editor.")
+            log.error("cookies.json not found!")
             return False
 
         log.info("Opening TikTok to inject cookies...")
@@ -71,7 +74,7 @@ class TikTokDMSender:
         time.sleep(3)
 
         try:
-            cookies  = json.loads(cookies_path.read_text(encoding="utf-8"))
+            cookies = json.loads(cookies_path.read_text(encoding="utf-8"))
             injected = 0
             for cookie in cookies:
                 for key in ["sameSite", "storeId", "id", "hostOnly", "session", "firstPartyDomain"]:
@@ -151,7 +154,7 @@ class TikTokDMSender:
         driver = self._init_driver()
         try:
             if not self._load_cookies(driver):
-                log.error("Cookie login failed. Make sure cookies.json exists and is valid.")
+                log.error("Cookie login failed.")
                 return
 
             success = 0
