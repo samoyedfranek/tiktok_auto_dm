@@ -2,8 +2,7 @@ name: TikTok DM Bot Automated Run
 
 on:
   schedule:
-    # Uruchamia raz dziennie o 15:00 UTC (17:00 czasu polskiego)
-    - cron: "0 15 * * *"
+    - cron: "14 15 * * *"
   workflow_dispatch:
 
 jobs:
